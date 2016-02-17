@@ -5,6 +5,8 @@ import java.util.HashMap;
 
 import types.*;
 
+//Hallå!!
+
 public class DataBase {
 	private HashMap<String, ArrayList<Record>> recordsMap; //ersÃ¤tta alla hashmaps med en med User objekt ist?
 	private HashMap<String, Patient> patients;
