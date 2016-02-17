@@ -6,6 +6,7 @@ import java.util.HashMap;
 import types.*;
 
 //Hallå!!
+//hej
 
 public class DataBase {
 	private HashMap<String, ArrayList<Record>> recordsMap; //ersÃ¤tta alla hashmaps med en med User objekt ist?
