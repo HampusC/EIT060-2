@@ -8,3 +8,5 @@
 /server/
 /types/
 /bin/
+bin/
+.settings/
