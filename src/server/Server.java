@@ -28,6 +28,7 @@ public class Server implements Runnable {
 			SSLSocket socket = (SSLSocket) serverSocket.accept();
 			newListener();
 			SSLSession session = socket.getSession();
+		System.out.println(session.getCipherSuite());
 			X509Certificate cert = (X509Certificate) session.getPeerCertificateChain()[0];
 			String subject = cert.getSubjectDN().getName();
 			String issuer = cert.getIssuerDN().getName();
@@ -119,7 +120,7 @@ public class Server implements Runnable {
 
 	public static void main(String args[]) {
 		System.out.println("\nServer Started\n");
-		int port = 9876;
+		int port = 9877;
 		if (args.length >= 1) {
 			port = Integer.parseInt(args[0]);
 		}
