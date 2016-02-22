@@ -31,11 +31,15 @@ public class Client {
         try { /* get input parameters */
             host = args[0];
             port = Integer.parseInt(args[1]);
+           Client client = new Client(host, port);
         } catch (IllegalArgumentException e) {
             System.out.println("USAGE: java client host port");
             System.exit(-1);
         }
 
+ 
+    }
+    public Client(String host, int port) throws Exception{
         try { /* set up a key manager for client authentication */
             SSLSocketFactory factory = null;
             try {

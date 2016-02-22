@@ -6,11 +6,13 @@ import server.DataBase;
 public abstract class User {
 	private String serial;
 	private int division;
-	private String name;
+	protected String name;
 	private ArrayList<String> patients;
 	
-	public  User(){
-
+	public  User(String name,int division, ArrayList<String> patients ){
+		this.name=name;
+		this.division=division;
+		this.patients=patients;
 	}
 	public boolean checkIfInPatientsList(String name) {
 		for(String temp:patients){
@@ -21,6 +23,7 @@ public abstract class User {
 		return false;
 		
 	}
+	
 	public int getDivision() {
 		// TODO Auto-generated method stub
 		return division;

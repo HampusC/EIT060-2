@@ -41,7 +41,7 @@ public class Server implements Runnable {
 					"certificate serial number (serial number field) on certificate received:\n" + serial + "\n");
 
 			System.out.println(numConnectedClients + " concurrent connection(s)\n");
-			currentUser = db.findUser(subject);
+			currentUser = db.findUser("kim"); // should be subject
 			// if(currentUser!=null){ //ta hand om när null
 
 			PrintWriter out = null;
@@ -101,9 +101,9 @@ public class Server implements Runnable {
 	}
 
 	private void list(String name, PrintWriter out) {
-		if ((currentUser instanceof Patient)) {
-			out.println("not a valid command!"); // also audit?
-		}
+//		if ((currentUser instanceof Patient)) {
+//			out.println("not a valid command!"); // also audit?
+//		}
 		if (currentUser.checkIfInPatientsList(name) || db.checkDivision(currentUser.getDivision(), name)) {
 			for (Record temp : db.getPatientRecords(name)) {
 				out.println(temp.getDate());

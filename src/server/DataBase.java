@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 import types.*;
 
-//Hallå!!
+//Hallï¿½!!
 //hej
 
 public class DataBase {
@@ -19,6 +19,7 @@ public class DataBase {
 		patients=new HashMap<String, Patient>();
 		nurses=new HashMap<String, Nurse>();
 		doctors=new HashMap<String, Doctor>();
+		addForTest();
 	}
 
 	public ArrayList<Record> getPatientRecords(String name){
@@ -44,9 +45,18 @@ public class DataBase {
 	public User findUser(String name) {
 		User temp;
 		temp = patients.get(name);
+		if(temp == null){
 		temp = nurses.get(name);
+		}
+		if(temp == null){
 		temp = doctors.get(name);
+		}
 		return temp;
 	}
-
+    private void addForTest(){
+    	patients.put("kim", new Patient("kim",3, null ));
+    	 ArrayList<Record> recordsTemp = new ArrayList<Record>();
+    	 recordsTemp.add(new Record("Doctor Lisa", "Nurse Lasse", 3, "2015-06-17", "removed leg."));
+    	recordsMap.put("kim",recordsTemp );
+    }
 }
