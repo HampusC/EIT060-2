@@ -1,6 +1,8 @@
 package types;
 
-public class Record {
+import java.io.Serializable;
+
+public class Record implements Serializable {
 private String doctor;
 private String nurse;
 private String patientName;
@@ -29,5 +31,21 @@ public int getDivision() {
 public String getMedicalData() {
 	// TODO Auto-generated method stub
 	return medicalData;
+}
+
+public String getDoctor() {
+	// TODO Auto-generated method stub
+	return doctor;
+}
+
+public String getNurse() {
+	// TODO Auto-generated method stub
+	return nurse;
+}
+
+public void setMedicalData(String medicalData) {
+	this.medicalData=medicalData;
+	System.out.println("medicaldata is " + medicalData);
+	
 }
 }

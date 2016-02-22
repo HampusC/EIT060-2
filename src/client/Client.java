@@ -3,13 +3,17 @@ package client;
 import java.net.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import types.Record;
 
@@ -26,6 +30,10 @@ import java.util.Scanner;
  * the firewall by following SSLSocketClientWithTunneling.java.
  */
 public class Client {
+	private ObjectOutputStream out;
+	private ObjectInputStream in;
+	private JTextField medicalDataLabel;
+	private JFrame f;
 
 	public static void main(String[] args) throws Exception {
 		String host = null;
@@ -102,8 +110,8 @@ public class Client {
 			System.out.println("secure connection established\n\n");
 
 			BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
-			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			out= new ObjectOutputStream(socket.getOutputStream());
+			in= new ObjectInputStream(socket.getInputStream());
 			String msg;
 			for (;;) {
 				System.out.print(">");
@@ -112,15 +120,26 @@ public class Client {
 					break;
 				}
 				System.out.print("sending '" + msg + "' to server...");
-				out.println(msg);
+				out.writeObject(msg);
 				out.flush();
 				System.out.println("done");
-				String response = in.readLine();
-				if (response.equals("sending journal")) {
-					reciveJournal(in.readLine());
+				Object response = in.readObject();
+				String stringResponse;
+				if(response instanceof String){
+					stringResponse=(String) (response);
+					System.out.println("received '" + stringResponse + "' from server\n");
+					if(((String)stringResponse).equals("send data")){
+						Record t= (Record)in.readObject();
+						System.out.println("tidigare i client" +t.getMedicalData() );
+						recieveJournal(t,true);
+					}
+				}
+				else if (response instanceof Record) {
+					System.out.println("tidigare i client" +((Record)response).getMedicalData() );
+					recieveJournal((Record)response, false);
 				} else {
-
-					System.out.println("received '" + response + "' from server\n");
+					System.out.println("Didn't understand server response");
+					
 				}
 			}
 			in.close();
@@ -132,27 +151,64 @@ public class Client {
 		}
 	}
 
-	private void reciveJournal(String string) {
-		JFrame f = new JFrame("Journal Viewer");
+	private void recieveJournal(Record response, boolean editable) {
+		System.out.println("in client " + response.getMedicalData());
+		f = new JFrame("Journal Viewer");
 		f.setSize(600, 400);
-		JLabel dataLabel = new JLabel();
-		dataLabel.setText(string);
-		JLabel infoLabel = new JLabel("Doctor: Matts " + " Nurse: Lisa");
-		JLabel divLabel = new JLabel("Dvision: Div 3");
-		JLabel dateLabel = new JLabel("2014-0-12");
+
+		JLabel dateLabel = new JLabel(response.getDate());
+
+		JLabel infoLabel = new JLabel("Doctor: " + response.getDoctor()+ "     Nurse: " + response.getNurse());
+
+		JLabel divLabel = new JLabel("Division: Div " + response.getDivision());
+
+		medicalDataLabel = new JTextField();
+		medicalDataLabel.setText(response.getMedicalData());
+		medicalDataLabel.setBackground(Color.WHITE);
+		medicalDataLabel.setBorder(BorderFactory.createLoweredBevelBorder());
+		medicalDataLabel.setEditable(editable);
+
 		JPanel infoPanel = new JPanel();
-		dataLabel.setBackground(Color.WHITE);
 		infoPanel.setLayout(new BorderLayout());
 		infoPanel.add(dateLabel, BorderLayout.NORTH);
 		infoPanel.add(divLabel, BorderLayout.CENTER);
 		infoPanel.add(infoLabel, BorderLayout.SOUTH);
 		infoPanel.setBackground(Color.RED);
-		dataLabel.setBorder(BorderFactory.createLoweredBevelBorder());
-		;
-		f.add(infoPanel, BorderLayout.NORTH);
-		f.add(dataLabel, BorderLayout.CENTER);
-		f.setVisible(true);
+		
+		JButton writeButton = new JButton("Write changes to server");
+		writeButton.addActionListener(new WriteButtonActionlistener());
 
+		f.add(infoPanel, BorderLayout.NORTH);
+		f.add(medicalDataLabel, BorderLayout.CENTER);
+		f.add(writeButton, BorderLayout.SOUTH);
+		f.setVisible(true);
+		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+
+	}
+	private class WriteButtonActionlistener implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if(medicalDataLabel!=null){
+			try {
+				out.writeObject(new Record("","",0,"", medicalDataLabel.getText()));
+				String temp = (String)in.readObject(); // use for error messages if not "recieved"
+				medicalDataLabel=null;
+			} catch (IOException | ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+		}
+		
+		if( f!=null){
+			f.setVisible(false); //you can't see me!
+			f.dispose(); //Destroy the JFrame object
+			f=null;
+		}
+		
+	}
 	}
 
 }

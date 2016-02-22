@@ -56,7 +56,12 @@ public class DataBase {
     private void addForTest(){
     	patients.put("kim", new Patient("kim",3, null ));
     	 ArrayList<Record> recordsTemp = new ArrayList<Record>();
-    	 recordsTemp.add(new Record("Doctor Lisa", "Nurse Lasse", 3, "2015-06-17", "removed leg."));
+    	 recordsTemp.add(new Record("Doctor Lisa", "Nurse Lasse", 3, "2015-06-17", "removed \n leg."));
     	recordsMap.put("kim",recordsTemp );
     }
+
+	public void putPatientRecords(String name, ArrayList<Record> records) {
+		recordsMap.put(name, records);
+		
+	}
 }

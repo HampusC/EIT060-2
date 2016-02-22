@@ -3,6 +3,8 @@ package server;
 import java.io.*;
 import java.net.*;
 import java.security.KeyStore;
+import java.util.ArrayList;
+
 import javax.net.*;
 import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
@@ -46,13 +48,12 @@ public class Server implements Runnable {
 			currentUser = db.findUser("kim"); // should be subject
 			// if(currentUser!=null){ //ta hand om när null
 
-			PrintWriter out = null;
-			BufferedReader in = null;
-			out = new PrintWriter(socket.getOutputStream(), true);
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-			String clientMsg = null;
-			while ((clientMsg = in.readLine()) != null) {
+			ObjectOutputStream out =null;
+			ObjectInputStream in = null;
+			out = new ObjectOutputStream(socket.getOutputStream());
+			in = new ObjectInputStream(socket.getInputStream());
+			Object clientMsg = null;
+			while ((clientMsg = in.readObject()) != null) {
 				// String rev = new
 				// StringBuilder(clientMsg).reverse().toString();
 				// System.out.println("received '" + clientMsg + "' from
@@ -61,8 +62,10 @@ public class Server implements Runnable {
 				// out.println(rev);
 				// out.flush();
 				// System.out.println("done\n");
-				interptretMessage(clientMsg, out);
-			}
+				if(clientMsg instanceof String){
+				interpretMessage((String)clientMsg, out, in);
+				}
+				}
 			in.close();
 			out.close();
 			socket.close();
@@ -70,14 +73,14 @@ public class Server implements Runnable {
 			System.out.println("client disconnected");
 			System.out.println(numConnectedClients + " concurrent connection(s)\n");
 			// }
-		} catch (IOException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			System.out.println("Client died: " + e.getMessage());
 			e.printStackTrace();
 			return;
 		}
 	}
 
-	private void interptretMessage(String msg, PrintWriter out) { // kom ihåg,
+	private void interpretMessage(String msg, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException { // kom ihåg,
 																	// vad
 																	// händer om
 																	// read
@@ -95,13 +98,47 @@ public class Server implements Runnable {
 		} else if (msgParts[0].equals("read")) {
 			read(msgParts[1], msgParts[2], out);
 			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
-		} else {
-			out.println("failed to interpret");
+		} else if(msgParts[0].equals("write")){
+			try {
+				write(msgParts[1], msgParts[2], out, in);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else{
+			out.writeObject("failed to interpret");
 
 		}
 	}
 
-	private void read(String name, String date, PrintWriter out) {
+	private void write(String name, String date, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException {
+		if (checkAccess(name)) { 
+			//se till att inte ok bara för rätt division
+			
+			ArrayList<Record> records = db.getPatientRecords(name);
+			for (Record temp : records) {
+				if(temp.getDate().equals(date)){
+					
+					out.writeObject("send data");
+					System.out.println("innan wtrite ser4ver " + temp.getMedicalData());
+					out.reset();
+					out.writeObject(temp);
+					Object tempIn =  in.readObject();
+					if(tempIn instanceof Record){
+				temp.setMedicalData(((Record)tempIn).getMedicalData());
+				out.writeObject("received");
+					break;
+				}
+			}
+			
+			}
+			System.out.println(db.getPatientRecords(name).size() + " " + db.getPatientRecords(name).get(0).getMedicalData());
+		}
+		
+	}
+
+	private void read(String name, String date, ObjectOutputStream out) throws IOException {
+		System.out.println(db.getPatientRecords(name).size() + " " + db.getPatientRecords(name).get(0).getMedicalData());
 		if (checkAccess(name)) {
 			Record tempRecord =null;
 			for (Record temp : db.getPatientRecords(name)) {
@@ -111,25 +148,26 @@ public class Server implements Runnable {
 				}
 			}
 			if(tempRecord!=null){
-				out.println("sending journal");
-				out.println(tempRecord.getMedicalData());
+				System.out.println("before sned: " + tempRecord.getMedicalData());
+				out.reset();
+		out.writeObject(tempRecord);
 				return;
 			}
 		}
-		out.println("journal not found or not allowed");
+		out.writeObject("journal not found or not allowed");
 
 	}
 
-	private void list(String name, PrintWriter out) {
+	private void list(String name, ObjectOutputStream out) throws IOException {
 		// if ((currentUser instanceof Patient)) {
 		// out.println("not a valid command!"); // also audit?
 		// }
 		if (checkAccess(name)) {
 			for (Record temp : db.getPatientRecords(name)) {
-				out.println(temp.getDate());
+				out.writeObject(temp.getDate());
 			}
 		} else {
-			out.println("patient not found or not allowed"); // also audit log.
+			out.writeObject("patient not found or not allowed"); // also audit log.
 		}
 
 	}
