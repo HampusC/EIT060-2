@@ -25,4 +25,9 @@ public int getDivision() {
 	// TODO Auto-generated method stub
 	return division;
 }
+
+public String getMedicalData() {
+	// TODO Auto-generated method stub
+	return medicalData;
+}
 }

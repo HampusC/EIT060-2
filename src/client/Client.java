@@ -4,6 +4,11 @@ import java.net.*;
 import java.io.*;
 import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+
+import types.Record;
+
 import java.security.KeyStore;
 import java.security.cert.*;
 import java.util.Scanner;
@@ -99,8 +104,13 @@ public class Client {
                 out.println(msg);
                 out.flush();
                 System.out.println("done");
-
-                System.out.println("received '" + in.readLine() + "' from server\n");
+                String response=in.readLine();
+                if(response.equals("sending journal")){
+                	reciveJournal(in.readLine());
+                }else{
+                	
+                System.out.println("received '" + response+ "' from server\n");
+                }
             }
             in.close();
 			out.close();
@@ -110,5 +120,17 @@ public class Client {
             e.printStackTrace();
         }
     }
+	private void reciveJournal(String string) {
+		JFrame f = new JFrame("Journal Viewer");
+		f.setSize(600, 600);
+		JLabel dataLabel = new JLabel();
+		dataLabel.setText(string);
+		f.add(dataLabel);
+		f.setVisible(true);
+		
+		
+		
+		
+	}
 
 }

@@ -28,7 +28,7 @@ public class Server implements Runnable {
 			SSLSocket socket = (SSLSocket) serverSocket.accept();
 			newListener();
 			SSLSession session = socket.getSession();
-		System.out.println(session.getCipherSuite());
+			System.out.println(session.getCipherSuite());
 			X509Certificate cert = (X509Certificate) session.getPeerCertificateChain()[0];
 			String subject = cert.getSubjectDN().getName();
 			String issuer = cert.getIssuerDN().getName();
@@ -97,14 +97,29 @@ public class Server implements Runnable {
 	}
 
 	private void read(String name, String date, PrintWriter out) {
+		if (checkAccess(name)) {
+			Record tempRecord =null;
+			for (Record temp : db.getPatientRecords(name)) {
+				if(temp.getDate().equals(date)){
+					tempRecord = temp;
+					break;
+				}
+			}
+			if(tempRecord!=null){
+				out.println("sending journal");
+				out.println(tempRecord.getMedicalData());
+				return;
+			}
+		}
+		out.println("journal not found or not allowed");
 
 	}
 
 	private void list(String name, PrintWriter out) {
-//		if ((currentUser instanceof Patient)) {
-//			out.println("not a valid command!"); // also audit?
-//		}
-		if (currentUser.checkIfInPatientsList(name) || db.checkDivision(currentUser.getDivision(), name)) {
+		// if ((currentUser instanceof Patient)) {
+		// out.println("not a valid command!"); // also audit?
+		// }
+		if (checkAccess(name)) {
 			for (Record temp : db.getPatientRecords(name)) {
 				out.println(temp.getDate());
 			}
@@ -112,6 +127,11 @@ public class Server implements Runnable {
 			out.println("patient not found or not allowed"); // also audit log.
 		}
 
+	}
+
+	private boolean checkAccess(String name) {
+
+		return (currentUser.checkIfInPatientsList(name) || db.checkDivision(currentUser.getDivision(), name));
 	}
 
 	private void newListener() {
