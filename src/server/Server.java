@@ -16,11 +16,13 @@ public class Server implements Runnable {
 	private static int numConnectedClients = 0;
 	private DataBase db;
 	private User currentUser; // remeber to set usetr accordign to certificate
+	private AuditLog log;
 
 	public Server(ServerSocket ss) throws IOException {
 		serverSocket = ss;
 		newListener();
 		db = new DataBase();
+		log = new AuditLog();
 	}
 
 	public void run() {
@@ -86,10 +88,13 @@ public class Server implements Runnable {
 		for (String temp : msgParts) {
 			System.out.println(temp);
 		}
+		
 		if (msgParts[0].equals("list")) {
 			list(msgParts[1], out);
+			log.log(currentUser.getName(),msgParts[0],msgParts[1]);
 		} else if (msgParts[0].equals("read")) {
 			read(msgParts[1], msgParts[2], out);
+			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 		} else {
 			out.println("failed to interpret");
 

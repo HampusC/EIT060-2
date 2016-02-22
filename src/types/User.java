@@ -29,6 +29,10 @@ public abstract class User {
 		return division;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
 
   
 }
