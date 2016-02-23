@@ -209,10 +209,10 @@ public class Server implements Runnable {
 		
 	}
 	
-	private void create(String name, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
+	private void create(String name, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{//added method to check really acceptable record
 		if (checkAccess(name)){
 			ArrayList<Record> recordsTemp = db.getPatientRecords(name);
-			out.writeObject("send data");
+			out.writeObject("send new record");
 			Object tempIn = in.readObject();
 			out.writeObject("received");
 			recordsTemp.add((Record)tempIn);

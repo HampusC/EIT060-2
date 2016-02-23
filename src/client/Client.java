@@ -32,7 +32,7 @@ import java.util.Scanner;
  * The application can be modified to connect to a server outside
  * the firewall by following SSLSocketClientWithTunneling.java.
  */
-public class Client implements ActionListener {
+public class Client {
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private JTextField medicalDataLabel;
@@ -77,9 +77,23 @@ public class Client implements ActionListener {
 		passwordFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		passwordField = new JPasswordField(15);
 		passwordField.setActionCommand("OK");
-		passwordField.addActionListener(this);
+		passwordField.addActionListener(new PasswordField());
 		passwordFrame.add(passwordField);
 		passwordFrame.setVisible(true);
+		SSLSocket socket = trySocket("password".toCharArray());
+        if (socket!=null) {
+         System.out.println("Success! You typed the right password.");
+         passwordFrame.setVisible(false);
+         passwordFrame.dispose();
+         passwordFrame=null;
+            run(socket);
+        } else {
+            JOptionPane.showMessageDialog(null,
+                "Invalid password. Try again.",
+                "Error Message",
+                JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
 
 			
 	}
@@ -88,8 +102,7 @@ private SSLSocket trySocket(char[] userPass){
 	try{	
 	SSLSocketFactory factory = null;
 		try {
-			
-			
+		
 			char[] password = "password".toCharArray();
 			System.out.println("Input your password");
 			KeyStore ks = KeyStore.getInstance("JKS");
@@ -167,6 +180,9 @@ private void run(SSLSocket socket){
 				Record t= (Record)in.readObject();
 				recieveJournal(t,true);
 			}
+			if(((String)stringResponse).equals("send new record")){
+				recieveJournal(new Record("","",0,"",""),true);
+			}
 		}
 		else if (response instanceof Record) {
 			recieveJournal((Record)response, false);
@@ -185,10 +201,10 @@ private void run(SSLSocket socket){
 }
 
 	private void recieveJournal(Record response, boolean editable) {
-		System.out.println("in client " + response.getMedicalData());
 		f = new JFrame("Journal Viewer");
 		f.setSize(600, 400);
-
+		
+		f.add(new JLabel("hejeehejehej"), BorderLayout.SOUTH);
 		JLabel dateLabel = new JLabel(response.getDate());
 
 		JLabel infoLabel = new JLabel("Doctor: " + response.getDoctor()+ "     Nurse: " + response.getNurse());
@@ -214,9 +230,13 @@ private void run(SSLSocket socket){
 		}
 		f.add(infoPanel, BorderLayout.NORTH);
 		f.add(medicalDataLabel, BorderLayout.CENTER);
-		f.setVisible(true);
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+		JFrame frame = new JFrame("trest");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.add(new JLabel("hejehejeh"));
+		frame.setVisible(true);
+		f.setVisible(true);
+		System.out.println("after ckloseoper");
 
 	}
 	
@@ -244,37 +264,48 @@ private void run(SSLSocket socket){
 		
 	}
 	}
+	
+		private class CreatenewRecordActionlistener implements ActionListener{
 
-	@Override
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if(medicalDataLabel!=null){
+			try {
+				out.writeObject(new Record("","",0,"", medicalDataLabel.getText()));
+				String temp = (String)in.readObject(); // use for error messages if not "recieved"
+				medicalDataLabel=null;
+			} catch (IOException | ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+		}
+		
+		if( f!=null){
+			f.setVisible(false); //you can't see me!
+			f.dispose(); //Destroy the JFrame object
+			f=null;
+		}
+		
+	}
+	}
+		private class PasswordField implements ActionListener{
+	
 	public void actionPerformed(ActionEvent e) {
 		String cmd = e.getActionCommand();
 
 	    if ("OK".equals(cmd)) { //Process the password.
 	        char[] input = passwordField.getPassword();
-	        SSLSocket socket = trySocket(input);
-	        if (socket!=null) {
-	         System.out.println("Success! You typed the right password.");
-	         passwordFrame.setVisible(false);
-	         passwordFrame.dispose();
-	         passwordFrame=null;
-	            run(socket);
-	        } else {
-	            JOptionPane.showMessageDialog(null,
-	                "Invalid password. Try again.",
-	                "Error Message",
-	                JOptionPane.ERROR_MESSAGE);
-	            System.exit(1);
-	        }
+	        
 
 	        //Zero out the possible password, for security.
 	        Arrays.fill(input, '0');
-
-	        passwordField.selectAll();
-	        
+	       
 	    } else {
 	    	//handle the Help button...
 	    }
 		
 	}
 
+}
 }
