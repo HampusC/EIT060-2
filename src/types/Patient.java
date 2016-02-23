@@ -2,8 +2,8 @@ package types;
 import java.util.ArrayList;
 
 public class Patient extends User  {
-	public Patient(String name, int division, ArrayList<String> patients) {
-		super(name, division, patients);
+	public Patient(String name, int division) {
+		super(name, division);
 		// TODO Auto-generated constructor stub
 	}
 

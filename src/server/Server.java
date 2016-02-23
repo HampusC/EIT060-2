@@ -9,6 +9,7 @@ import javax.net.*;
 import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
 
+import types.Government;
 import types.Patient;
 import types.Record;
 import types.User;
@@ -105,6 +106,9 @@ public class Server implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}else if (msgParts[0].equals("delete")){
+			delete(msgParts[1], msgParts[2], out);
+			
 		}else{
 			out.writeObject("failed to interpret");
 
@@ -145,6 +149,7 @@ public class Server implements Runnable {
 				if(temp.getDate().equals(date)){
 					tempRecord = temp;
 					break;
+					
 				}
 			}
 			if(tempRecord!=null){
@@ -171,9 +176,26 @@ public class Server implements Runnable {
 		}
 
 	}
+	
+	private void delete(String name, String date, ObjectOutputStream out) throws IOException{
+		boolean deleted = false;
+		if (currentUser instanceof Government){
+			ArrayList<Record> recordsTemp = db.getPatientRecords(name);
+			for (Record temp : recordsTemp ) {
+				if(temp.getDate().equals(date)){
+					deleted =recordsTemp.remove(temp);
+					out.writeObject(name + " " + date + " deleted! " + deleted);
+				}
+				}
+			
+		}
+		
+	}
 
 	private boolean checkAccess(String name) {
-
+		if(currentUser instanceof Government){
+			return true;
+		}
 		return (currentUser.checkIfInPatientsList(name) || db.checkDivision(currentUser.getDivision(), name));
 	}
 

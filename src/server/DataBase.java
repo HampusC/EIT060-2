@@ -13,6 +13,7 @@ public class DataBase {
 	private HashMap<String, Patient> patients;
 	private HashMap<String, Nurse> nurses;
 	private HashMap<String, Doctor> doctors;
+	private Government gov;
 
 	public DataBase() {
 		recordsMap = new HashMap<String, ArrayList<Record>>();
@@ -51,13 +52,19 @@ public class DataBase {
 		if(temp == null){
 		temp = doctors.get(name);
 		}
+		if(temp == null){
+			if(gov!=null &&gov.getName().equals(name)){
+				temp =gov;
+			}
+		}
 		return temp;
 	}
     private void addForTest(){
-    	patients.put("kim", new Patient("kim",3, null ));
+    	gov= new Government("kim",3);
+    	patients.put("hampe", new Patient("hampe", 3));
     	 ArrayList<Record> recordsTemp = new ArrayList<Record>();
     	 recordsTemp.add(new Record("Doctor Lisa", "Nurse Lasse", 3, "2015-06-17", "removed \n leg."));
-    	recordsMap.put("kim",recordsTemp );
+    	recordsMap.put("hampe",recordsTemp );
     }
 
 	public void putPatientRecords(String name, ArrayList<Record> records) {

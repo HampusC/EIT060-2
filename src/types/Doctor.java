@@ -5,8 +5,8 @@ import server.DataBase;
 
 public class Doctor extends User{
 
-	public Doctor(String name, int division, ArrayList<String> patients) {
-		super(name, division, patients);
+	public Doctor(String name, int division) {
+		super(name, division);
 		// TODO Auto-generated constructor stub
 	}
 

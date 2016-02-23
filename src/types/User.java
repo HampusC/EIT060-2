@@ -9,10 +9,10 @@ public abstract class User {
 	protected String name;
 	private ArrayList<String> patients;
 	
-	public  User(String name,int division, ArrayList<String> patients ){
+	public  User(String name,int division ){
 		this.name=name;
 		this.division=division;
-		this.patients=patients;
+		patients=new ArrayList<String>();
 	}
 	public boolean checkIfInPatientsList(String name) {
 		for(String temp:patients){
