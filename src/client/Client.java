@@ -12,13 +12,16 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 import types.Record;
 
 import java.security.KeyStore;
 import java.security.cert.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /*
@@ -29,11 +32,16 @@ import java.util.Scanner;
  * The application can be modified to connect to a server outside
  * the firewall by following SSLSocketClientWithTunneling.java.
  */
-public class Client {
+public class Client implements ActionListener {
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private JTextField medicalDataLabel;
 	private JFrame f;
+	private JFrame passwordFrame;
+	private JPasswordField passwordField;
+	private String filePath;
+	private String host;
+	private int port;
 
 	public static void main(String[] args) throws Exception {
 		String host = null;
@@ -57,97 +65,124 @@ public class Client {
 	}
 
 	public Client(String host, int port) throws Exception {
-		try { /* set up a key manager for client authentication */
-			SSLSocketFactory factory = null;
-			try {
-				Scanner scan = new Scanner(System.in);
-				System.out.println("Input the filepath to your certificate");
-				String filePath = scan.nextLine();
-				char[] password = "password".toCharArray();
-				System.out.println("Input your password");
-				String userPass = scan.nextLine();
-				KeyStore ks = KeyStore.getInstance("JKS");
-				KeyStore ts = KeyStore.getInstance("JKS");
-				KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-				TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-				SSLContext ctx = SSLContext.getInstance("TLS");
-				ks.load(new FileInputStream("src/client/clientkeystore"), password); // keystore
-																						// password
-																						// (storepass)
-				ts.load(new FileInputStream("src/client/clienttruststore"), password); // truststore
-																						// password
-																						// (storepass);
-				kmf.init(ks, userPass.toCharArray()); // user password (keypass)
-				tmf.init(ts); // keystore can be used as truststore here
-				ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-				factory = ctx.getSocketFactory();
-			} catch (Exception e) {
-				throw new IOException(e.getMessage());
-			}
-			SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
-			System.out.println("\nsocket before handshake:\n" + socket + "\n");
+		this.port=port;
+		this.host=host;
+		Scanner scan = new Scanner(System.in);
+		System.out.println("Input the filepath to your certificate");
+		filePath = scan.nextLine();
+		passwordFrame = new JFrame("Insert your password!");
+		passwordFrame.setSize(200, 60);
+		passwordFrame.setLocation(500,500);
+		passwordFrame.setResizable(false);
+		passwordFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		passwordField = new JPasswordField(15);
+		passwordField.setActionCommand("OK");
+		passwordField.addActionListener(this);
+		passwordFrame.add(passwordField);
+		passwordFrame.setVisible(true);
 
-			/*
-			 * send http request
-			 *
-			 * See SSLSocketClient.java for more information about why there is
-			 * a forced handshake here when using PrintWriters.
-			 */
-			socket.startHandshake();
-
-			SSLSession session = socket.getSession();
-			X509Certificate cert = (X509Certificate) session.getPeerCertificateChain()[0];
-			String subject = cert.getSubjectDN().getName();
-			String issuer = cert.getIssuerDN().getName();
-			String serial = cert.getSerialNumber().toString();
-			System.out.println(
-					"certificate name (subject DN field) on certificate received from server:\n" + subject + "\n");
-			System.out.println(
-					"certificate issuer (issuer DN field) on certificate received from server:\n" + issuer + "\n");
-			System.out.println("certificate serial number (serial number field) on certificate received from server:\n"
-					+ serial + "\n");
-			System.out.println("socket after handshake:\n" + socket + "\n");
-			System.out.println("secure connection established\n\n");
-
-			BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
-			out= new ObjectOutputStream(socket.getOutputStream());
-			in= new ObjectInputStream(socket.getInputStream());
-			String msg;
-			for (;;) {
-				System.out.print(">");
-				msg = read.readLine();
-				if (msg.equalsIgnoreCase("quit")) {
-					break;
-				}
-				System.out.print("sending '" + msg + "' to server...");
-				out.writeObject(msg);
-				out.flush();
-				System.out.println("done");
-				Object response = in.readObject();
-				String stringResponse;
-				if(response instanceof String){
-					stringResponse=(String) (response);
-					System.out.println("received '" + stringResponse + "' from server\n");
-					if(((String)stringResponse).equals("send data")){
-						Record t= (Record)in.readObject();
-						recieveJournal(t,true);
-					}
-				}
-				else if (response instanceof Record) {
-					recieveJournal((Record)response, false);
-				} else {
-					System.out.println("Didn't understand server response");
-					
-				}
-			}
-			in.close();
-			out.close();
-			read.close();
-			socket.close();
+			
+	}
+private SSLSocket trySocket(char[] userPass){
+	/* set up a key manager for client authentication */
+	try{	
+	SSLSocketFactory factory = null;
+		try {
+			
+			
+			char[] password = "password".toCharArray();
+			System.out.println("Input your password");
+			KeyStore ks = KeyStore.getInstance("JKS");
+			KeyStore ts = KeyStore.getInstance("JKS");
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+			SSLContext ctx = SSLContext.getInstance("TLS");
+			ks.load(new FileInputStream("src/client/clientkeystore"), password); // keystore
+																					// password
+																					// (storepass)
+			ts.load(new FileInputStream("src/client/clienttruststore"), password); // truststore
+																					// password
+																					// (storepass);
+			kmf.init(ks, userPass); // user password (keypass)
+			tmf.init(ts); // keystore can be used as truststore here
+			ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+			factory = ctx.getSocketFactory();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+		SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
+		System.out.println("\nsocket before handshake:\n" + socket + "\n");
+
+		/*
+		 * send http request
+		 *
+		 * See SSLSocketClient.java for more information about why there is
+		 * a forced handshake here when using PrintWriters.
+		 */
+		socket.startHandshake();
+
+		SSLSession session = socket.getSession();
+		X509Certificate cert = (X509Certificate) session.getPeerCertificateChain()[0];
+		String subject = cert.getSubjectDN().getName();
+		String issuer = cert.getIssuerDN().getName();
+		String serial = cert.getSerialNumber().toString();
+		System.out.println(
+				"certificate name (subject DN field) on certificate received from server:\n" + subject + "\n");
+		System.out.println(
+				"certificate issuer (issuer DN field) on certificate received from server:\n" + issuer + "\n");
+		System.out.println("certificate serial number (serial number field) on certificate received from server:\n"
+				+ serial + "\n");
+		System.out.println("socket after handshake:\n" + socket + "\n");
+		System.out.println("secure connection established\n\n");
+		return socket;
+	
+
+} catch(Exception e){
+	e.printStackTrace();
+}
+	return null;
+}
+private void run(SSLSocket socket){
+	try{
+	BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
+	out= new ObjectOutputStream(socket.getOutputStream());
+	in= new ObjectInputStream(socket.getInputStream());
+	String msg;
+	for (;;) {
+		System.out.print(">");
+		msg = read.readLine();
+		if (msg.equalsIgnoreCase("quit")) {
+			break;
+		}
+		System.out.print("sending '" + msg + "' to server...");
+		out.writeObject(msg);
+		out.flush();
+		System.out.println("done");
+		Object response = in.readObject();
+		String stringResponse;
+		if(response instanceof String){
+			stringResponse=(String) (response);
+			System.out.println("received '" + stringResponse + "' from server\n");
+			if(((String)stringResponse).equals("send data")){
+				Record t= (Record)in.readObject();
+				recieveJournal(t,true);
+			}
+		}
+		else if (response instanceof Record) {
+			recieveJournal((Record)response, false);
+		} else {
+			System.out.println("Didn't understand server response");
+			
 		}
 	}
+	in.close();
+	out.close();
+	read.close();
+	socket.close();
+} catch (Exception e) {
+	e.printStackTrace();
+}
+}
 
 	private void recieveJournal(Record response, boolean editable) {
 		System.out.println("in client " + response.getMedicalData());
@@ -184,6 +219,7 @@ public class Client {
 		
 
 	}
+	
 	private class WriteButtonActionlistener implements ActionListener{
 
 		@Override
@@ -207,6 +243,38 @@ public class Client {
 		}
 		
 	}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		String cmd = e.getActionCommand();
+
+	    if ("OK".equals(cmd)) { //Process the password.
+	        char[] input = passwordField.getPassword();
+	        SSLSocket socket = trySocket(input);
+	        if (socket!=null) {
+	         System.out.println("Success! You typed the right password.");
+	         passwordFrame.setVisible(false);
+	         passwordFrame.dispose();
+	         passwordFrame=null;
+	            run(socket);
+	        } else {
+	            JOptionPane.showMessageDialog(null,
+	                "Invalid password. Try again.",
+	                "Error Message",
+	                JOptionPane.ERROR_MESSAGE);
+	            System.exit(1);
+	        }
+
+	        //Zero out the possible password, for security.
+	        Arrays.fill(input, '0');
+
+	        passwordField.selectAll();
+	        
+	    } else {
+	    	//handle the Help button...
+	    }
+		
 	}
 
 }
