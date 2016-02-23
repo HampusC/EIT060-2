@@ -21,6 +21,13 @@ Calendar time = Calendar.getInstance();
 		}
 		return true;
 	}
+
+
+
+	public void log(String name, String msg) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 
 }

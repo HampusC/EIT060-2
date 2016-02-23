@@ -102,15 +102,18 @@ public class Server implements Runnable {
 		} else if(msgParts[0].equals("write")){
 			try {
 				write(msgParts[1], msgParts[2], out, in);
+				log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}else if (msgParts[0].equals("delete")){
 			delete(msgParts[1], msgParts[2], out);
+			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 			
 		}else{
 			out.writeObject("failed to interpret");
+			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 
 		}
 	}
@@ -168,9 +171,12 @@ public class Server implements Runnable {
 		// out.println("not a valid command!"); // also audit?
 		// }
 		if (checkAccess(name)) {
+			StringBuilder sb = new StringBuilder();
 			for (Record temp : db.getPatientRecords(name)) {
-				out.writeObject(temp.getDate());
+				sb.append(temp.getDate());
+				sb.append("\n");
 			}
+			out.writeObject(sb.toString());
 		} else {
 			out.writeObject("patient not found or not allowed"); // also audit log.
 		}
