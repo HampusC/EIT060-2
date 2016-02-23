@@ -81,11 +81,11 @@ public class Server implements Runnable {
 		}
 	}
 
-	private void interpretMessage(String msg, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException { // kom ihåg,
+	private void interpretMessage(String msg, ObjectOutputStream out, ObjectInputStream in) throws IOException { // kom ihåg,
 																	// vad
 																	// händer om
 																	// read
-																	// göran
+				try{												// göran
 																	// knutsson
 		System.out.println(msg);
 		String msgParts[] = msg.split(": ");
@@ -108,14 +108,25 @@ public class Server implements Runnable {
 				e.printStackTrace();
 			}
 		}else if (msgParts[0].equals("delete")){
+			
 			delete(msgParts[1], msgParts[2], out);
 			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 			
+		}else if(msgParts[0].equals("create")){
+			create(msgParts[1], out, in);
+			log.log(currentUser.getName(),msgParts[0],msgParts[1]);
+			
+		
 		}else{
 			out.writeObject("failed to interpret");
-			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
+			log.log(currentUser.getName(),msg);
 
 		}
+				}catch(Exception e)	{
+					out.writeObject("failed to interpret");
+					log.log(currentUser.getName(),msg);
+				}
+				
 	}
 
 	private void write(String name, String date, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -196,6 +207,16 @@ public class Server implements Runnable {
 			
 		}
 		
+	}
+	
+	private void create(String name, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
+		if (checkAccess(name)){
+			ArrayList<Record> recordsTemp = db.getPatientRecords(name);
+			out.writeObject("send data");
+			Object tempIn = in.readObject();
+			out.writeObject("received");
+			recordsTemp.add((Record)tempIn);
+		}
 	}
 
 	private boolean checkAccess(String name) {
