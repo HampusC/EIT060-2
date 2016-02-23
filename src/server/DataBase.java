@@ -64,6 +64,7 @@ public class DataBase {
     	patients.put("hampe", new Patient("hampe", 3));
     	 ArrayList<Record> recordsTemp = new ArrayList<Record>();
     	 recordsTemp.add(new Record("Doctor Lisa", "Nurse Lasse", 3, "2015-06-17", "removed \n leg."));
+    	 recordsTemp.add(new Record("Doctor Liset", "Nurse Lars", 3, "2015-06-19", "has lungs"));
     	recordsMap.put("hampe",recordsTemp );
     }
 

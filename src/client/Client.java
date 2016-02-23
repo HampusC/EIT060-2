@@ -130,12 +130,10 @@ public class Client {
 					System.out.println("received '" + stringResponse + "' from server\n");
 					if(((String)stringResponse).equals("send data")){
 						Record t= (Record)in.readObject();
-						System.out.println("tidigare i client" +t.getMedicalData() );
 						recieveJournal(t,true);
 					}
 				}
 				else if (response instanceof Record) {
-					System.out.println("tidigare i client" +((Record)response).getMedicalData() );
 					recieveJournal((Record)response, false);
 				} else {
 					System.out.println("Didn't understand server response");
@@ -174,13 +172,13 @@ public class Client {
 		infoPanel.add(divLabel, BorderLayout.CENTER);
 		infoPanel.add(infoLabel, BorderLayout.SOUTH);
 		infoPanel.setBackground(Color.RED);
-		
+		if(editable){
 		JButton writeButton = new JButton("Write changes to server");
 		writeButton.addActionListener(new WriteButtonActionlistener());
-
+		f.add(writeButton, BorderLayout.SOUTH);
+		}
 		f.add(infoPanel, BorderLayout.NORTH);
 		f.add(medicalDataLabel, BorderLayout.CENTER);
-		f.add(writeButton, BorderLayout.SOUTH);
 		f.setVisible(true);
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
