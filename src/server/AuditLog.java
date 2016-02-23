@@ -24,8 +24,11 @@ Calendar time = Calendar.getInstance();
 
 
 
-	public void log(String name, String msg) {
+	public void log(String user, String msg) throws IOException {
+		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("auditlog.txt", true)))) {
+		    out.println(time.getTime()+" "+user+" wanted to \""+msg);
 		// TODO Auto-generated method stub
+		}
 		
 	}
 	
