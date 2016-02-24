@@ -3,6 +3,9 @@ package client;
 import java.net.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
@@ -17,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import javafx.scene.layout.Border;
 import types.Record;
 
 import java.security.KeyStore;
@@ -42,6 +46,11 @@ public class Client {
 	private String filePath;
 	private String host;
 	private int port;
+	private JTextField  createDateField;
+	private JTextField  createDivField;
+	private JTextField  createMedField;
+	private JTextField  createNurseField;
+	private JFrame journalCreator;
 
 	public static void main(String[] args) throws Exception {
 		String host = null;
@@ -157,6 +166,7 @@ private SSLSocket trySocket(char[] userPass){
 }
 private void run(SSLSocket socket){
 	try{
+	
 	BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
 	out= new ObjectOutputStream(socket.getOutputStream());
 	in= new ObjectInputStream(socket.getInputStream());
@@ -181,7 +191,7 @@ private void run(SSLSocket socket){
 				recieveJournal(t,true);
 			}
 			if(((String)stringResponse).equals("send new record")){
-				recieveJournal(new Record("","",0,"",""),true);
+				createJournalWindow();
 			}
 		}
 		else if (response instanceof Record) {
@@ -204,7 +214,6 @@ private void run(SSLSocket socket){
 		f = new JFrame("Journal Viewer");
 		f.setSize(600, 400);
 		
-		f.add(new JLabel("hejeehejehej"), BorderLayout.SOUTH);
 		JLabel dateLabel = new JLabel(response.getDate());
 
 		JLabel infoLabel = new JLabel("Doctor: " + response.getDoctor()+ "     Nurse: " + response.getNurse());
@@ -230,13 +239,62 @@ private void run(SSLSocket socket){
 		}
 		f.add(infoPanel, BorderLayout.NORTH);
 		f.add(medicalDataLabel, BorderLayout.CENTER);
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		JFrame frame = new JFrame("trest");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.add(new JLabel("hejehejeh"));
-		frame.setVisible(true);
 		f.setVisible(true);
-		System.out.println("after ckloseoper");
+
+	}
+	private void createJournalWindow(){
+//		f = new JFrame("Journal Viewer");
+//		f.setSize(600, 400);
+		journalCreator = new JFrame("Create Journal");
+		journalCreator.setLayout(new BorderLayout());
+		journalCreator.setSize(600, 400);
+		JPanel infoPanel = new JPanel();
+		
+		infoPanel.setLayout(new BorderLayout());
+		JLabel dateLabel = new JLabel("The Date: ");
+		createDateField = new JTextField();
+		createDateField.setPreferredSize(new Dimension(400, 50));
+		JPanel datePanel = new JPanel();
+		datePanel.add(dateLabel);
+		datePanel.add(createDateField);
+		infoPanel.add(datePanel, BorderLayout.NORTH);
+		
+		JLabel nurseLabel = new JLabel("Nurse:   ");
+		createNurseField = new JTextField();
+		createNurseField.setPreferredSize(new Dimension(400, 50));
+		JPanel nursePanel = new JPanel();
+		nursePanel.add(nurseLabel);
+		nursePanel.add(createNurseField);
+		infoPanel.add(nursePanel, BorderLayout.CENTER);
+		
+//		JLabel divLabel = new JLabel("Division: ");
+//		createDivField = new JTextField();
+//		createDivField.setPreferredSize(new Dimension(400, 50));
+//		JPanel divPanel = new JPanel();
+//		divPanel.add(divLabel);
+//		divPanel.add(createDivField);
+//		infoPanel.add(divPanel, BorderLayout.SOUTH);
+		
+		journalCreator.add(infoPanel, BorderLayout.NORTH);
+		
+		JLabel medLabel = new JLabel("Medical Data: ");
+		createMedField = new JTextField();
+		createMedField.setPreferredSize(new Dimension(400, 125));
+		JPanel medPanel = new JPanel();
+		medPanel.setLayout(new BorderLayout());
+		medPanel.add(medLabel, BorderLayout.NORTH);
+		medPanel.add(createMedField, BorderLayout.SOUTH);
+		journalCreator.add(medPanel, BorderLayout.CENTER);
+		
+//		JButton writeButton = new JButton("Write changes to server");
+//	writeButton.addActionListener(new WriteButtonActionlistener());
+///f.add(writeButton, BorderLayout.SOUTH);
+		JButton createButton = new JButton("Create");
+		createButton.addActionListener(new CreatenewRecordActionlistener());
+		journalCreator.add(createButton, BorderLayout.SOUTH);
+		
+		
+		journalCreator.setVisible(true);
 
 	}
 	
@@ -269,22 +327,32 @@ private void run(SSLSocket socket){
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			if(medicalDataLabel!=null){
+			
 			try {
-				out.writeObject(new Record("","",0,"", medicalDataLabel.getText()));
+//				int div =Integer.parseInt(createDivField.getText());
+				out.writeObject(new Record("",createNurseField.getText(),0,createDateField.getText(), createMedField.getText()));
+				System.out.println("senT");
 				String temp = (String)in.readObject(); // use for error messages if not "recieved"
-				medicalDataLabel=null;
-			} catch (IOException | ClassNotFoundException e1) {
+				createNurseField=null;
+				createDateField=null;
+				createMedField=null;
+				createDivField=null;
+			} catch (IOException | NumberFormatException | ClassNotFoundException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				try {
+					out.writeObject("failed");
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
 			}
 			
-		}
 		
-		if( f!=null){
-			f.setVisible(false); //you can't see me!
-			f.dispose(); //Destroy the JFrame object
-			f=null;
+		
+		if( journalCreator!=null){
+			journalCreator.setVisible(false); //you can't see me!
+			journalCreator.dispose(); //Destroy the JFrame object
+			journalCreator=null;
 		}
 		
 	}

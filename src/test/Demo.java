@@ -19,7 +19,7 @@ public class Demo {
 			
 			private static class Server1 extends Thread {
 				public void run() {
-					Server.main(new String[] {"9876"});
+					Server.main(new String[] {"9877"});
 				}
 			}
 			
@@ -28,7 +28,7 @@ public class Demo {
 			private static class Client1 extends Thread {
 				public void run() {
 					try {
-						Client.main(new String[] {"localhost" , "9876"});
+						Client.main(new String[] {"localhost" , "9877"});
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

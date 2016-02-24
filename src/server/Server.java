@@ -9,10 +9,8 @@ import javax.net.*;
 import javax.net.ssl.*;
 import javax.security.cert.X509Certificate;
 
-import types.Government;
-import types.Patient;
-import types.Record;
-import types.User;
+import types.*;
+
 
 public class Server implements Runnable {
 	private ServerSocket serverSocket = null;
@@ -130,34 +128,32 @@ public class Server implements Runnable {
 	}
 
 	private void write(String name, String date, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException {
-		if (checkAccess(name)) { 
 			//se till att inte ok bara för rätt division
 			
 			ArrayList<Record> records = db.getPatientRecords(name);
 			for (Record temp : records) {
 				if(temp.getDate().equals(date)){
-					
+					if(checkWriteAccess(temp)){
 					out.writeObject("send data");
-					System.out.println("innan wtrite ser4ver " + temp.getMedicalData());
 					out.reset();
 					out.writeObject(temp);
 					Object tempIn =  in.readObject();
 					if(tempIn instanceof Record){
 				temp.setMedicalData(((Record)tempIn).getMedicalData());
 				out.writeObject("received");
-					break;
+					return;
+					}
 				}
 			}
 			
 			}
-			System.out.println(db.getPatientRecords(name).size() + " " + db.getPatientRecords(name).get(0).getMedicalData());
+			out.writeObject("Not allowed to write or user not found");
 		}
 		
-	}
+	
 
 	private void read(String name, String date, ObjectOutputStream out) throws IOException {
-		System.out.println(db.getPatientRecords(name).size() + " " + db.getPatientRecords(name).get(0).getMedicalData());
-		if (checkAccess(name)) {
+		
 			Record tempRecord =null;
 			for (Record temp : db.getPatientRecords(name)) {
 				if(temp.getDate().equals(date)){
@@ -167,30 +163,56 @@ public class Server implements Runnable {
 				}
 			}
 			if(tempRecord!=null){
-				System.out.println("before sned: " + tempRecord.getMedicalData());
+				if(checkReadAccess(tempRecord)){
 				out.reset();
-		out.writeObject(tempRecord);
+				out.writeObject(tempRecord);
 				return;
 			}
-		}
+			}
 		out.writeObject("journal not found or not allowed");
-
+}
+	private boolean checkReadAccess(Record tempRecord) {
+		if(currentUser instanceof Patient){
+			return tempRecord.equals(currentUser.getName());
+		
 	}
-
+		if(currentUser instanceof Government){
+			return true;
+		
+	}else{ 
+		if(currentUser.getDivision()==tempRecord.getDivision()){
+			return true;
+		}
+		if(currentUser.getName()==tempRecord.getDoctor()||currentUser.getName()==tempRecord.getNurse()){
+			return true;
+		}
+		return false;
+	}
+	}
+	private boolean checkWriteAccess(Record tempRecord) {
+		if(currentUser instanceof Doctor){
+			return currentUser.getName().equals(tempRecord.getDoctor());
+		}
+		if(currentUser instanceof Nurse){
+			return currentUser.getName().equals(tempRecord.getNurse());
+		}
+		return false;
+	}
 	private void list(String name, ObjectOutputStream out) throws IOException {
 		// if ((currentUser instanceof Patient)) {
 		// out.println("not a valid command!"); // also audit?
 		// }
-		if (checkAccess(name)) {
+		
 			StringBuilder sb = new StringBuilder();
 			for (Record temp : db.getPatientRecords(name)) {
+				if(checkReadAccess(temp)){
 				sb.append(temp.getDate());
 				sb.append("\n");
+				}
 			}
+			
 			out.writeObject(sb.toString());
-		} else {
-			out.writeObject("patient not found or not allowed"); // also audit log.
-		}
+	
 
 	}
 	
@@ -206,17 +228,23 @@ public class Server implements Runnable {
 				}
 			
 		}
+		out.writeObject("Could not delete!");
 		
 	}
 	
 	private void create(String name, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{//added method to check really acceptable record
-		if (checkAccess(name)){
+		if (currentUser instanceof Doctor){
 			ArrayList<Record> recordsTemp = db.getPatientRecords(name);
 			out.writeObject("send new record");
 			Object tempIn = in.readObject();
 			out.writeObject("received");
-			recordsTemp.add((Record)tempIn);
-		}
+			Record received = (Record)tempIn;
+			Record temp = new Record(currentUser.getName(),received.getNurse(),currentUser.getDivision(),received.getDate(),received.getMedicalData());
+			recordsTemp.add(temp);
+			
+		}else{
+		out.writeObject("Not allowed to create record!");
+	}
 	}
 
 	private boolean checkAccess(String name) {
