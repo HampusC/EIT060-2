@@ -76,22 +76,36 @@ public class Client {
 		Scanner scan = new Scanner(System.in);
 		System.out.println("Input the filepath to your certificate");
 		filePath = scan.nextLine();
-		passwordFrame = new JFrame("Insert your password!");
-		passwordFrame.setSize(200, 60);
-		passwordFrame.setLocation(500,500);
-		passwordFrame.setResizable(false);
-		passwordFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		passwordField = new JPasswordField(15);
-		passwordField.setActionCommand("OK");
-		passwordField.addActionListener(new PasswordField());
-		passwordFrame.add(passwordField);
-		passwordFrame.setVisible(true);
-		SSLSocket socket = trySocket("password".toCharArray());
+//		passwordFrame = new JFrame("Insert your password!");
+//		passwordFrame.setSize(200, 60);
+//		passwordFrame.setLocation(500,500);
+//		passwordFrame.setResizable(false);
+//		passwordFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		passwordField = new JPasswordField(15);
+//		passwordField.setActionCommand("OK");
+//		passwordField.addActionListener(new PasswordField());
+//		passwordFrame.add(passwordField);
+//		passwordFrame.setVisible(true);
+		JPanel panel = new JPanel();
+		JLabel label = new JLabel("Enter a password:");
+		JPasswordField pass = new JPasswordField(10);
+		panel.add(label);
+		panel.add(pass);
+		String[] options = new String[]{"OK", "Cancel"};
+		char[] password = "".toCharArray();
+		int option = JOptionPane.showOptionDialog(null, panel, "The title",
+		                         JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
+		                         null, options, options[0]);
+		if(option == 0) // pressing OK button
+		{
+		    password = pass.getPassword();
+		    System.out.println("Your password is: " + new String(password));
+		}
+		
+		SSLSocket socket = trySocket(password);
         if (socket!=null) {
          System.out.println("Success! You typed the right password.");
-         passwordFrame.setVisible(false);
-         passwordFrame.dispose();
-         passwordFrame=null;
+     
             run(socket);
         } else {
             JOptionPane.showMessageDialog(null,
@@ -109,17 +123,16 @@ private SSLSocket trySocket(char[] userPass){
 	SSLSocketFactory factory = null;
 		try {
 		
-			char[] password = "password".toCharArray();
-			System.out.println("Input your password");
 			KeyStore ks = KeyStore.getInstance("JKS");
 			KeyStore ts = KeyStore.getInstance("JKS");
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
 			SSLContext ctx = SSLContext.getInstance("TLS");
-			ks.load(new FileInputStream("src/client/clientkeystore"), password); // keystore
+			String completeFilePath = "certificates/" + filePath+"keystore";
+			ks.load(new FileInputStream(completeFilePath), userPass); // keystore
 																					// password
 																					// (storepass)
-			ts.load(new FileInputStream("src/client/clienttruststore"), password); // truststore
+			ts.load(new FileInputStream("certificates/clienttruststore"), "password".toCharArray()); // truststore
 																					// password
 																					// (storepass);
 			kmf.init(ks, userPass); // user password (keypass)
@@ -354,23 +367,4 @@ private void run(SSLSocket socket){
 		
 	}
 	}
-		private class PasswordField implements ActionListener{
-	
-	public void actionPerformed(ActionEvent e) {
-		String cmd = e.getActionCommand();
-
-	    if ("OK".equals(cmd)) { //Process the password.
-	        char[] input = passwordField.getPassword();
-	        
-
-	        //Zero out the possible password, for security.
-	        Arrays.fill(input, '0');
-	       
-	    } else {
-	    	//handle the Help button...
-	    }
-		
-	}
-
-}
 }

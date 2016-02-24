@@ -1,9 +1,10 @@
 package types;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import server.DataBase;
 
-public abstract class User {
+public abstract class User implements Serializable {
 	private String serial;
 	private int division;
 	protected String name;

@@ -18,11 +18,16 @@ public class Server implements Runnable {
 	private DataBase db;
 	private User currentUser; // remeber to set usetr accordign to certificate
 	private AuditLog log;
+	private final String FILEPATH = "database.ser";
 
 	public Server(ServerSocket ss) throws IOException {
 		serverSocket = ss;
 		newListener();
-		db = new DataBase();
+		boolean loaded = false;
+		if(!loaded){ //sätt till !loaded
+			db= new DataBase();
+			
+		}
 		log = new AuditLog();
 	}
 
@@ -34,6 +39,7 @@ public class Server implements Runnable {
 			System.out.println(session.getCipherSuite());
 			X509Certificate cert = (X509Certificate) session.getPeerCertificateChain()[0];
 			String subject = cert.getSubjectDN().getName();
+			String cn = subject.substring(3, subject.indexOf(","));
 			String issuer = cert.getIssuerDN().getName();
 			String serial = cert.getSerialNumber().toString();
 			numConnectedClients++;
@@ -44,9 +50,22 @@ public class Server implements Runnable {
 					"certificate serial number (serial number field) on certificate received:\n" + serial + "\n");
 
 			System.out.println(numConnectedClients + " concurrent connection(s)\n");
-			currentUser = db.findUser("kim"); // should be subject
-			// if(currentUser!=null){ //ta hand om när null
-
+			currentUser = db.findUser(cn); // should be subject
+			System.out.println(cn + " logged.");
+			 if(currentUser==null){  //ta hand om när null
+				System.out.println("no user found");
+				return;
+			 }
+			
+			if(currentUser instanceof Government){
+				System.out.println("is gov");
+			}
+			if(currentUser instanceof Doctor){
+				System.out.println("is doc");
+			}
+			if(currentUser instanceof Nurse){
+				System.out.println("is nurse");
+			}
 			ObjectOutputStream out =null;
 			ObjectInputStream in = null;
 			out = new ObjectOutputStream(socket.getOutputStream());
@@ -76,6 +95,31 @@ public class Server implements Runnable {
 			System.out.println("Client died: " + e.getMessage());
 			e.printStackTrace();
 			return;
+		}
+	}
+	private boolean loadDataBase() {
+		try {
+		FileInputStream fin = new FileInputStream(FILEPATH);
+		ObjectInputStream ois = new ObjectInputStream(fin);
+			db = (DataBase) ois.readObject();
+			
+			ois.close();
+			return true;
+		} catch (ClassNotFoundException | IOException e) {
+			// TODO Auto-generated catch block
+			return false;
+		}
+	}
+	private void saveDataBase(){
+		try {
+		FileOutputStream fout = new FileOutputStream(FILEPATH);
+		ObjectOutputStream oos;
+			oos = new ObjectOutputStream(fout);
+			oos.writeObject(db);
+			oos.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -141,6 +185,7 @@ public class Server implements Runnable {
 					if(tempIn instanceof Record){
 				temp.setMedicalData(((Record)tempIn).getMedicalData());
 				out.writeObject("received");
+				saveDataBase();
 					return;
 					}
 				}
@@ -224,6 +269,7 @@ public class Server implements Runnable {
 				if(temp.getDate().equals(date)){
 					deleted =recordsTemp.remove(temp);
 					out.writeObject(name + " " + date + " deleted! " + deleted);
+					saveDataBase();
 				}
 				}
 			
@@ -233,28 +279,25 @@ public class Server implements Runnable {
 	}
 	
 	private void create(String name, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{//added method to check really acceptable record
-		if (currentUser instanceof Doctor){
-			ArrayList<Record> recordsTemp = db.getPatientRecords(name);
+		ArrayList<Record> recordsTemp = db.getPatientRecords(name);
+		if (currentUser instanceof Doctor && recordsTemp!=null){
 			out.writeObject("send new record");
 			Object tempIn = in.readObject();
 			out.writeObject("received");
 			Record received = (Record)tempIn;
 			Record temp = new Record(currentUser.getName(),received.getNurse(),currentUser.getDivision(),received.getDate(),received.getMedicalData());
 			recordsTemp.add(temp);
+			saveDataBase();
 			
 		}else{
 		out.writeObject("Not allowed to create record!");
 	}
 	}
 
-	private boolean checkAccess(String name) {
-		if(currentUser instanceof Government){
-			return true;
-		}
-		return (currentUser.checkIfInPatientsList(name) || db.checkDivision(currentUser.getDivision(), name));
-	}
+
 
 	private void newListener() {
+	
 		(new Thread(this)).start();
 	} // calls run()
 
@@ -288,13 +331,13 @@ public class Server implements Runnable {
 				KeyStore ts = KeyStore.getInstance("JKS");
 				char[] password = "password".toCharArray();
 
-				ks.load(new FileInputStream("src/server/serverkeystore"), password); // keystore
+				ks.load(new FileInputStream("certificates/Serverkeystore"), "Server".toCharArray()); // keystore
 																						// password
 																						// (storepass)
-				ts.load(new FileInputStream("src/server/servertruststore"), password); // truststore
+				ts.load(new FileInputStream("certificates/servertruststore"), "password".toCharArray()); // truststore
 																						// password
 																						// (storepass)
-				kmf.init(ks, password); // certificate password (keypass)
+				kmf.init(ks, "Server".toCharArray()); // certificate password (keypass)
 				tmf.init(ts); // possible to use keystore as truststore here
 				ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 				ssf = ctx.getServerSocketFactory();
