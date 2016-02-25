@@ -56,6 +56,7 @@ public class DataBase implements Serializable {
 		recordsMap.put("simon", recordsTemp2);
 		
 		users.put("KimKumz", new Doctor("Kim Kumz", 2));
+		users.put("GretaGroot", new Nurse("Greta Groot", 3));
 		
 	}
 

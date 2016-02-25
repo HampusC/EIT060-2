@@ -76,16 +76,6 @@ public class Client {
 		Scanner scan = new Scanner(System.in);
 		System.out.println("Input the filepath to your certificate");
 		filePath = scan.nextLine();
-		// passwordFrame = new JFrame("Insert your password!");
-		// passwordFrame.setSize(200, 60);
-		// passwordFrame.setLocation(500,500);
-		// passwordFrame.setResizable(false);
-		// passwordFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		// passwordField = new JPasswordField(15);
-		// passwordField.setActionCommand("OK");
-		// passwordField.addActionListener(new PasswordField());
-		// passwordFrame.add(passwordField);
-		// passwordFrame.setVisible(true);
 		JPanel panel = new JPanel();
 		JLabel label = new JLabel("Enter a password:");
 		JPasswordField pass = new JPasswordField(10);
@@ -177,6 +167,7 @@ public class Client {
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in = new ObjectInputStream(socket.getInputStream());
 			String msg;
+			System.out.println("\nDon't forget to close the client when your are done!");
 			for (;;) {
 				System.out.print(">");
 				msg = read.readLine();
@@ -217,6 +208,7 @@ public class Client {
 
 	private void recieveJournal(Record response, boolean editable) {
 		f = new JFrame("Journal Viewer");
+		f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		f.setSize(600, 400);
 
 		JLabel dateLabel = new JLabel(response.getDate());
@@ -252,6 +244,7 @@ public class Client {
 		journalCreator = new JFrame("Create Journal");
 		journalCreator.setLayout(new BorderLayout());
 		journalCreator.setSize(600, 400);
+		journalCreator.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		JPanel infoPanel = new JPanel();
 
 		infoPanel.setLayout(new BorderLayout());
@@ -335,7 +328,6 @@ public class Client {
 				try {
 					out.writeObject("failed");
 				} catch (IOException e2) {
-					// TODO Auto-generated catch block
 					e2.printStackTrace();
 				}
 			}
