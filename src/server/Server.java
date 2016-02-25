@@ -227,9 +227,11 @@ public class Server implements Runnable {
 	}else{ 
 		if(currentUser.getDivision()==tempRecord.getDivision()){
 			return true;
-		}
-		if(currentUser.getName()==tempRecord.getDoctor()||currentUser.getName()==tempRecord.getNurse()){
-			return true;
+		}if(currentUser instanceof Doctor){
+			return currentUser.getName().equals(tempRecord.getDoctor());
+		
+		}if(currentUser instanceof Nurse){
+			return currentUser.getName().equals(tempRecord.getNurse());
 		}
 		return false;
 	}
