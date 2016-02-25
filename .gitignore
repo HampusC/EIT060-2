@@ -12,3 +12,5 @@ bin/
 .settings/
 /auditlog.txt
 auditlog.txt
+database.ser
+/database.ser
