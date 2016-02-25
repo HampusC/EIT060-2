@@ -43,10 +43,10 @@ public class Client {
 	private String filePath;
 	private String host;
 	private int port;
-	private JTextField  createDateField;
-	private JTextField  createDivField;
-	private JTextField  createMedField;
-	private JTextField  createNurseField;
+	private JTextField createDateField;
+	private JTextField createDivField;
+	private JTextField createMedField;
+	private JTextField createNurseField;
 	private JFrame journalCreator;
 
 	public static void main(String[] args) throws Exception {
@@ -71,162 +71,157 @@ public class Client {
 	}
 
 	public Client(String host, int port) throws Exception {
-		this.port=port;
-		this.host=host;
+		this.port = port;
+		this.host = host;
 		Scanner scan = new Scanner(System.in);
 		System.out.println("Input the filepath to your certificate");
 		filePath = scan.nextLine();
-//		passwordFrame = new JFrame("Insert your password!");
-//		passwordFrame.setSize(200, 60);
-//		passwordFrame.setLocation(500,500);
-//		passwordFrame.setResizable(false);
-//		passwordFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//		passwordField = new JPasswordField(15);
-//		passwordField.setActionCommand("OK");
-//		passwordField.addActionListener(new PasswordField());
-//		passwordFrame.add(passwordField);
-//		passwordFrame.setVisible(true);
+		// passwordFrame = new JFrame("Insert your password!");
+		// passwordFrame.setSize(200, 60);
+		// passwordFrame.setLocation(500,500);
+		// passwordFrame.setResizable(false);
+		// passwordFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		// passwordField = new JPasswordField(15);
+		// passwordField.setActionCommand("OK");
+		// passwordField.addActionListener(new PasswordField());
+		// passwordFrame.add(passwordField);
+		// passwordFrame.setVisible(true);
 		JPanel panel = new JPanel();
 		JLabel label = new JLabel("Enter a password:");
 		JPasswordField pass = new JPasswordField(10);
 		panel.add(label);
 		panel.add(pass);
-		String[] options = new String[]{"OK", "Cancel"};
+		String[] options = new String[] { "OK", "Cancel" };
 		char[] password = "".toCharArray();
-		int option = JOptionPane.showOptionDialog(null, panel, "The title",
-		                         JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
-		                         null, options, options[0]);
-		if(option == 0) // pressing OK button
+		int option = JOptionPane.showOptionDialog(null, panel, "Password", JOptionPane.NO_OPTION,
+				JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+		if (option == 0) // pressing OK button
 		{
-		    password = pass.getPassword();
-		    System.out.println("Your password is: " + new String(password));
+			password = pass.getPassword();
+			System.out.println("Your password is: " + new String(password));
 		}
-		
+
 		SSLSocket socket = trySocket(password);
-        if (socket!=null) {
-         System.out.println("Success! You typed the right password.");
-     
-            run(socket);
-        } else {
-            JOptionPane.showMessageDialog(null,
-                "Invalid password. Try again.",
-                "Error Message",
-                JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
-        }
+		if (socket != null) {
+			System.out.println("Success! You typed the right password.");
 
-			
-	}
-private SSLSocket trySocket(char[] userPass){
-	/* set up a key manager for client authentication */
-	try{	
-	SSLSocketFactory factory = null;
-		try {
-		
-			KeyStore ks = KeyStore.getInstance("JKS");
-			KeyStore ts = KeyStore.getInstance("JKS");
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-			SSLContext ctx = SSLContext.getInstance("TLS");
-			String completeFilePath = "certificates/" + filePath+"keystore";
-			ks.load(new FileInputStream(completeFilePath), userPass); // keystore
-																					// password
-																					// (storepass)
-			ts.load(new FileInputStream("certificates/clienttruststore"), "password".toCharArray()); // truststore
-																					// password
-																					// (storepass);
-			kmf.init(ks, userPass); // user password (keypass)
-			tmf.init(ts); // keystore can be used as truststore here
-			ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-			factory = ctx.getSocketFactory();
-		} catch (Exception e) {
-			throw new IOException(e.getMessage());
-		}
-		SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
-		System.out.println("\nsocket before handshake:\n" + socket + "\n");
-
-		/*
-		 * send http request
-		 *
-		 * See SSLSocketClient.java for more information about why there is
-		 * a forced handshake here when using PrintWriters.
-		 */
-		socket.startHandshake();
-
-		SSLSession session = socket.getSession();
-		X509Certificate cert = (X509Certificate) session.getPeerCertificateChain()[0];
-		String subject = cert.getSubjectDN().getName();
-		String issuer = cert.getIssuerDN().getName();
-		String serial = cert.getSerialNumber().toString();
-		System.out.println(
-				"certificate name (subject DN field) on certificate received from server:\n" + subject + "\n");
-		System.out.println(
-				"certificate issuer (issuer DN field) on certificate received from server:\n" + issuer + "\n");
-		System.out.println("certificate serial number (serial number field) on certificate received from server:\n"
-				+ serial + "\n");
-		System.out.println("socket after handshake:\n" + socket + "\n");
-		System.out.println("secure connection established\n\n");
-		return socket;
-	
-
-} catch(Exception e){
-	e.printStackTrace();
-}
-	return null;
-}
-private void run(SSLSocket socket){
-	try{
-	
-	BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
-	out= new ObjectOutputStream(socket.getOutputStream());
-	in= new ObjectInputStream(socket.getInputStream());
-	String msg;
-	for (;;) {
-		System.out.print(">");
-		msg = read.readLine();
-		if (msg.equalsIgnoreCase("quit")) {
-			break;
-		}
-		System.out.print("sending '" + msg + "' to server...");
-		out.writeObject(msg);
-		out.flush();
-		System.out.println("done");
-		Object response = in.readObject();
-		String stringResponse;
-		if(response instanceof String){
-			stringResponse=(String) (response);
-			System.out.println("received '" + stringResponse + "' from server\n");
-			if(((String)stringResponse).equals("send data")){
-				Record t= (Record)in.readObject();
-				recieveJournal(t,true);
-			}
-			if(((String)stringResponse).equals("send new record")){
-				createJournalWindow();
-			}
-		}
-		else if (response instanceof Record) {
-			recieveJournal((Record)response, false);
+			run(socket);
 		} else {
-			System.out.println("Didn't understand server response");
-			
+			JOptionPane.showMessageDialog(null, "Invalid password. Try again.", "Error Message",
+					JOptionPane.ERROR_MESSAGE);
+			System.exit(1);
+		}
+
+	}
+
+	private SSLSocket trySocket(char[] userPass) {
+		/* set up a key manager for client authentication */
+		try {
+			SSLSocketFactory factory = null;
+			try {
+
+				KeyStore ks = KeyStore.getInstance("JKS");
+				KeyStore ts = KeyStore.getInstance("JKS");
+				KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+				TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+				SSLContext ctx = SSLContext.getInstance("TLS");
+				String completeFilePath = "certificates/" + filePath + "keystore";
+				ks.load(new FileInputStream(completeFilePath), userPass); // keystore
+																			// password
+																			// (storepass)
+				ts.load(new FileInputStream("certificates/clienttruststore"), "password".toCharArray()); // truststore
+				// password
+				// (storepass);
+				kmf.init(ks, userPass); // user password (keypass)
+				tmf.init(ts); // keystore can be used as truststore here
+				ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+				factory = ctx.getSocketFactory();
+			} catch (Exception e) {
+				throw new IOException(e.getMessage());
+			}
+			SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
+
+			/*
+			 * send http request
+			 *
+			 * See SSLSocketClient.java for more information about why there is
+			 * a forced handshake here when using PrintWriters.
+			 */
+			socket.startHandshake();
+
+			SSLSession session = socket.getSession();
+			X509Certificate cert = (X509Certificate) session.getPeerCertificateChain()[0];
+			String subject = cert.getSubjectDN().getName();
+			String issuer = cert.getIssuerDN().getName();
+			String serial = cert.getSerialNumber().toString();
+			System.out.println(
+					"certificate name (subject DN field) on certificate received from server:\n" + subject + "\n");
+			System.out.println(
+					"certificate issuer (issuer DN field) on certificate received from server:\n" + issuer + "\n");
+			System.out.println("certificate serial number (serial number field) on certificate received from server:\n"
+					+ serial + "\n");
+			System.out.println("socket after handshake:\n" + socket + "\n");
+			System.out.println("secure connection established\n\n");
+			return socket;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	private void run(SSLSocket socket) {
+		try {
+
+			BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
+			out = new ObjectOutputStream(socket.getOutputStream());
+			in = new ObjectInputStream(socket.getInputStream());
+			String msg;
+			for (;;) {
+				System.out.print(">");
+				msg = read.readLine();
+				if (msg.equalsIgnoreCase("quit")) {
+					break;
+				}
+				System.out.print("sending '" + msg + "' to server...");
+				out.writeObject(msg);
+				out.flush();
+				System.out.println("done");
+				Object response = in.readObject();
+				String stringResponse;
+				if (response instanceof String) {
+					stringResponse = (String) (response);
+					System.out.println("received \n'" + stringResponse + "'\nfrom server\n");
+					if (((String) stringResponse).equals("send data")) {
+						Record t = (Record) in.readObject();
+						recieveJournal(t, true);
+					}
+					if (((String) stringResponse).equals("send new record")) {
+						createJournalWindow();
+					}
+				} else if (response instanceof Record) {
+					recieveJournal((Record) response, false);
+				} else {
+					System.out.println("Didn't understand server response");
+
+				}
+			}
+			in.close();
+			out.close();
+			read.close();
+			socket.close();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
-	in.close();
-	out.close();
-	read.close();
-	socket.close();
-} catch (Exception e) {
-	e.printStackTrace();
-}
-}
 
 	private void recieveJournal(Record response, boolean editable) {
 		f = new JFrame("Journal Viewer");
 		f.setSize(600, 400);
-		
+
 		JLabel dateLabel = new JLabel(response.getDate());
 
-		JLabel infoLabel = new JLabel("Doctor: " + response.getDoctor()+ "     Nurse: " + response.getNurse());
+		JLabel infoLabel = new JLabel("Doctor: " + response.getDoctor() + "     Nurse: " + response.getNurse());
 
 		JLabel divLabel = new JLabel("Division: Div " + response.getDivision());
 
@@ -242,24 +237,23 @@ private void run(SSLSocket socket){
 		infoPanel.add(divLabel, BorderLayout.CENTER);
 		infoPanel.add(infoLabel, BorderLayout.SOUTH);
 		infoPanel.setBackground(Color.RED);
-		if(editable){
-		JButton writeButton = new JButton("Write changes to server");
-		writeButton.addActionListener(new WriteButtonActionlistener());
-		f.add(writeButton, BorderLayout.SOUTH);
+		if (editable) {
+			JButton writeButton = new JButton("Write changes to server");
+			writeButton.addActionListener(new WriteButtonActionlistener());
+			f.add(writeButton, BorderLayout.SOUTH);
 		}
 		f.add(infoPanel, BorderLayout.NORTH);
 		f.add(medicalDataLabel, BorderLayout.CENTER);
 		f.setVisible(true);
 
 	}
-	private void createJournalWindow(){
-//		f = new JFrame("Journal Viewer");
-//		f.setSize(600, 400);
+
+	private void createJournalWindow() {
 		journalCreator = new JFrame("Create Journal");
 		journalCreator.setLayout(new BorderLayout());
 		journalCreator.setSize(600, 400);
 		JPanel infoPanel = new JPanel();
-		
+
 		infoPanel.setLayout(new BorderLayout());
 		JLabel dateLabel = new JLabel("The Date: ");
 		createDateField = new JTextField();
@@ -268,87 +262,76 @@ private void run(SSLSocket socket){
 		datePanel.add(dateLabel);
 		datePanel.add(createDateField);
 		infoPanel.add(datePanel, BorderLayout.NORTH);
-		
-		JLabel nurseLabel = new JLabel("Nurse:   ");
+
+		JLabel nurseLabel = new JLabel("Nurse:      ");
 		createNurseField = new JTextField();
 		createNurseField.setPreferredSize(new Dimension(400, 50));
 		JPanel nursePanel = new JPanel();
 		nursePanel.add(nurseLabel);
 		nursePanel.add(createNurseField);
 		infoPanel.add(nursePanel, BorderLayout.CENTER);
-		
-//		JLabel divLabel = new JLabel("Division: ");
-//		createDivField = new JTextField();
-//		createDivField.setPreferredSize(new Dimension(400, 50));
-//		JPanel divPanel = new JPanel();
-//		divPanel.add(divLabel);
-//		divPanel.add(createDivField);
-//		infoPanel.add(divPanel, BorderLayout.SOUTH);
-		
 		journalCreator.add(infoPanel, BorderLayout.NORTH);
-		
+
 		JLabel medLabel = new JLabel("Medical Data: ");
 		createMedField = new JTextField();
-		createMedField.setPreferredSize(new Dimension(400, 125));
+		createMedField.setPreferredSize(new Dimension(400, 200));
 		JPanel medPanel = new JPanel();
 		medPanel.setLayout(new BorderLayout());
 		medPanel.add(medLabel, BorderLayout.NORTH);
 		medPanel.add(createMedField, BorderLayout.SOUTH);
 		journalCreator.add(medPanel, BorderLayout.CENTER);
-		
-//		JButton writeButton = new JButton("Write changes to server");
-//	writeButton.addActionListener(new WriteButtonActionlistener());
-///f.add(writeButton, BorderLayout.SOUTH);
+
 		JButton createButton = new JButton("Create");
 		createButton.addActionListener(new CreatenewRecordActionlistener());
 		journalCreator.add(createButton, BorderLayout.SOUTH);
-		
-		
+
 		journalCreator.setVisible(true);
 
 	}
-	
-	private class WriteButtonActionlistener implements ActionListener{
+
+	private class WriteButtonActionlistener implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			if(medicalDataLabel!=null){
-			try {
-				out.writeObject(new Record("","",0,"", medicalDataLabel.getText()));
-				String temp = (String)in.readObject(); // use for error messages if not "recieved"
-				medicalDataLabel=null;
-			} catch (IOException | ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			if (medicalDataLabel != null) {
+				try {
+					out.writeObject(new Record("", "", 0, "", medicalDataLabel.getText()));
+					String temp = (String) in.readObject(); // use for error
+															// messages if not
+															// "recieved"
+					medicalDataLabel = null;
+				} catch (IOException | ClassNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
 			}
-			
+
+			if (f != null) {
+				f.setVisible(false); // you can't see me!
+				f.dispose(); // Destroy the JFrame object
+				f = null;
+			}
+
 		}
-		
-		if( f!=null){
-			f.setVisible(false); //you can't see me!
-			f.dispose(); //Destroy the JFrame object
-			f=null;
-		}
-		
 	}
-	}
-	
-		private class CreatenewRecordActionlistener implements ActionListener{
+
+	private class CreatenewRecordActionlistener implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			
+
 			try {
-//				int div =Integer.parseInt(createDivField.getText());
-				out.writeObject(new Record("",createNurseField.getText(),0,createDateField.getText(), createMedField.getText()));
-				System.out.println("senT");
-				String temp = (String)in.readObject(); // use for error messages if not "recieved"
-				createNurseField=null;
-				createDateField=null;
-				createMedField=null;
-				createDivField=null;
+				out.writeObject(new Record("", createNurseField.getText(), 0, createDateField.getText(),
+						createMedField.getText()));
+				String temp = (String) in.readObject(); // use for error
+														// messages if not
+														// "recieved"
+				createNurseField = null;
+				createDateField = null;
+				createMedField = null;
+				createDivField = null;
 			} catch (IOException | NumberFormatException | ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
 				try {
 					out.writeObject("failed");
 				} catch (IOException e2) {
@@ -356,15 +339,13 @@ private void run(SSLSocket socket){
 					e2.printStackTrace();
 				}
 			}
-			
-		
-		
-		if( journalCreator!=null){
-			journalCreator.setVisible(false); //you can't see me!
-			journalCreator.dispose(); //Destroy the JFrame object
-			journalCreator=null;
+
+			if (journalCreator != null) {
+				journalCreator.setVisible(false); // you can't see me!
+				journalCreator.dispose(); // Destroy the JFrame object
+				journalCreator = null;
+			}
+
 		}
-		
-	}
 	}
 }
