@@ -22,8 +22,8 @@ public class Server implements Runnable {
 	public Server(ServerSocket ss) throws IOException {
 		serverSocket = ss;
 		newListener();
-		boolean loaded = false;
-		if (!loaded) { // sätt till !loaded
+		boolean loaded = loadDataBase();
+		if (!loaded) {
 			db = new DataBase();
 
 		}
@@ -50,20 +50,20 @@ public class Server implements Runnable {
 
 			System.out.println(numConnectedClients + " concurrent connection(s)\n");
 			currentUser = db.findUser(cn); // should be subject
-			System.out.println(cn + " logged.");
+			System.out.println(cn + " logged in.");
 			if (currentUser == null) { // ta hand om när null
 				System.out.println("no user found");
 				return;
 			}
 
 			if (currentUser instanceof Government) {
-				System.out.println("is gov");
+				System.out.println("Logged in as Government");
 			}
 			if (currentUser instanceof Doctor) {
-				System.out.println("is doc");
+				System.out.println("Logged in as Doctor");
 			}
 			if (currentUser instanceof Nurse) {
-				System.out.println("is nurse");
+				System.out.println("Logged in as Government");
 			}
 			ObjectOutputStream out = null;
 			ObjectInputStream in = null;
@@ -98,7 +98,6 @@ public class Server implements Runnable {
 			ois.close();
 			return true;
 		} catch (ClassNotFoundException | IOException e) {
-			// TODO Auto-generated catch block
 			return false;
 		}
 	}
@@ -111,24 +110,13 @@ public class Server implements Runnable {
 			oos.writeObject(db);
 			oos.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	private void interpretMessage(String msg, ObjectOutputStream out, ObjectInputStream in) throws IOException { // kom
-																													// ihåg,
-		// vad
-		// händer om
-		// read
-		try { // göran
-				// knutsson
-			System.out.println(msg);
+	private void interpretMessage(String msg, ObjectOutputStream out, ObjectInputStream in) throws IOException {
+		try {
 			String msgParts[] = msg.split(": ");
-			for (String temp : msgParts) {
-				System.out.println(temp);
-			}
-
 			if (msgParts[0].equals("list")) {
 				list(msgParts[1], out);
 			} else if (msgParts[0].equals("read")) {
@@ -137,7 +125,6 @@ public class Server implements Runnable {
 				try {
 					write(msgParts[1], msgParts[2], out, in);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} else if (msgParts[0].equals("delete")) {
@@ -161,7 +148,6 @@ public class Server implements Runnable {
 
 	private void write(String name, String date, ObjectOutputStream out, ObjectInputStream in)
 			throws IOException, ClassNotFoundException {
-		// se till att inte ok bara för rätt division
 
 		ArrayList<Record> records = db.getPatientRecords(name);
 		for (Record temp : records) {
@@ -197,7 +183,7 @@ public class Server implements Runnable {
 			}
 		}
 		if (tempRecord != null) {
-			if (checkReadAccess(tempRecord)) {
+			if (checkReadAccess(tempRecord, name)) {
 				out.reset();
 				out.writeObject(tempRecord);
 				log.log(currentUser.getName(), "read " + name + " " + date, true);
@@ -219,9 +205,9 @@ public class Server implements Runnable {
 
 	}
 
-	private boolean checkReadAccess(Record tempRecord) {
+	private boolean checkReadAccess(Record tempRecord, String name) {
 		if (currentUser instanceof Patient) {
-			return tempRecord.equals(currentUser.getName());
+			return name.equals(currentUser.getName());
 
 		}
 		if (currentUser instanceof Government) {
@@ -255,7 +241,7 @@ public class Server implements Runnable {
 	private void list(String name, ObjectOutputStream out) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		for (Record temp : db.getPatientRecords(name)) {
-			if (checkReadAccess(temp)) {
+			if (checkReadAccess(temp, name)) {
 				sb.append(temp.getDate());
 				sb.append("\n");
 			}
@@ -276,6 +262,7 @@ public class Server implements Runnable {
 					out.writeObject(name + " " + date + " deleted! " + deleted);
 					saveDataBase();
 					log.log(currentUser.getName(), "delete" + name + " " + date, true);
+					return;
 				}
 			}
 
@@ -305,8 +292,8 @@ public class Server implements Runnable {
 				log.log(currentUser.getName(), "create " + name + " " + date, true);
 				return;
 			}
-		}else{
-		out.writeObject("Not allowed to create record!");
+		} else {
+			out.writeObject("Not allowed to create record!");
 		}
 		log.log(currentUser.getName(), "create " + name + " " + date, false);
 	}

@@ -208,7 +208,6 @@ public class Client {
 
 	private void recieveJournal(Record response, boolean editable) {
 		f = new JFrame("Journal Viewer");
-		f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		f.setSize(600, 400);
 
 		JLabel dateLabel = new JLabel(response.getDate());
@@ -233,6 +232,7 @@ public class Client {
 			JButton writeButton = new JButton("Write changes to server");
 			writeButton.addActionListener(new WriteButtonActionlistener());
 			f.add(writeButton, BorderLayout.SOUTH);
+			f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		}
 		f.add(infoPanel, BorderLayout.NORTH);
 		f.add(medicalDataLabel, BorderLayout.CENTER);
