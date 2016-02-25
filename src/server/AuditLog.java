@@ -9,25 +9,18 @@ import java.util.Calendar;
 public class AuditLog {
 Calendar time = Calendar.getInstance();	
 	
-	
-	
-	public boolean log(String user, String action, String wanted){
+
+
+
+	public void log(String user, String msg, Boolean allowed) throws IOException {
+		
 		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("auditlog.txt", true)))) {
-		    out.println(time.getTime()+" "+user+" wanted to \""+action+"\" the contents of \""+ wanted+"\"");
-		    //more code
-		    //more code
-		}catch (IOException e) {
-		    //exception handling left as an exercise for the reader
-		}
-		return true;
-	}
-
-
-
-	public void log(String user, String msg) throws IOException {
-		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("auditlog.txt", true)))) {
-		    out.println(time.getTime()+" "+user+" wanted to \""+msg);
+			if(!allowed){
+			out.println(time.getTime()+" "+user+" was denied to \""+msg+"\"");
 		// TODO Auto-generated method stub
+			}else{
+				out.println(time.getTime()+" "+user+" was allowed to \""+msg+"\"");
+			}
 		}
 		
 	}

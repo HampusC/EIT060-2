@@ -137,14 +137,11 @@ public class Server implements Runnable {
 		
 		if (msgParts[0].equals("list")) {
 			list(msgParts[1], out);
-			log.log(currentUser.getName(),msgParts[0],msgParts[1]);
 		} else if (msgParts[0].equals("read")) {
 			read(msgParts[1], msgParts[2], out);
-			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 		} else if(msgParts[0].equals("write")){
 			try {
 				write(msgParts[1], msgParts[2], out, in);
-				log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -152,21 +149,20 @@ public class Server implements Runnable {
 		}else if (msgParts[0].equals("delete")){
 			
 			delete(msgParts[1], msgParts[2], out);
-			log.log(currentUser.getName(),msgParts[0],msgParts[1]+" "+msgParts[2]);
 			
 		}else if(msgParts[0].equals("create")){
 			create(msgParts[1], out, in);
-			log.log(currentUser.getName(),msgParts[0],msgParts[1]);
+
 			
 		
 		}else{
 			out.writeObject("failed to interpret");
-			log.log(currentUser.getName(),msg);
+			log.log(currentUser.getName(),msg+" (failed to interpret)",false);
 
 		}
 				}catch(Exception e)	{
 					out.writeObject("failed to interpret");
-					log.log(currentUser.getName(),msg);
+					log.log(currentUser.getName(),msg+" (failed to interpret)",false);
 				}
 				
 	}
@@ -186,6 +182,7 @@ public class Server implements Runnable {
 				temp.setMedicalData(((Record)tempIn).getMedicalData());
 				out.writeObject("received");
 				saveDataBase();
+				log.log(currentUser.getName(), "write "+name+" "+date, true);
 					return;
 					}
 				}
@@ -193,6 +190,7 @@ public class Server implements Runnable {
 			
 			}
 			out.writeObject("Not allowed to write or user not found");
+			log.log(currentUser.getName(), "write"+name+" "+date, false);
 		}
 		
 	
@@ -211,10 +209,12 @@ public class Server implements Runnable {
 				if(checkReadAccess(tempRecord)){
 				out.reset();
 				out.writeObject(tempRecord);
+				log.log(currentUser.getName(),"read "+name+" "+date,true);
 				return;
 			}
 			}
 		out.writeObject("journal not found or not allowed");
+		log.log(currentUser.getName(), "read"+name+" "+date, false);
 }
 	private boolean checkReadAccess(Record tempRecord) {
 		if(currentUser instanceof Patient){
@@ -259,6 +259,7 @@ public class Server implements Runnable {
 			}
 			
 			out.writeObject(sb.toString());
+			log.log(currentUser.getName(),"list "+name,true);
 	
 
 	}
@@ -272,16 +273,19 @@ public class Server implements Runnable {
 					deleted =recordsTemp.remove(temp);
 					out.writeObject(name + " " + date + " deleted! " + deleted);
 					saveDataBase();
+					log.log(currentUser.getName(), "delete"+name+" "+date, true);
 				}
 				}
 			
 		}
 		out.writeObject("Could not delete!");
+		log.log(currentUser.getName(), "delete"+name+" "+date, false);
 		
 	}
 	
 	private void create(String name, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{//added method to check really acceptable record
 		ArrayList<Record> recordsTemp = db.getPatientRecords(name);
+		String date = null;
 		if (currentUser instanceof Doctor && recordsTemp!=null){
 			out.writeObject("send new record");
 			Object tempIn = in.readObject();
@@ -290,9 +294,12 @@ public class Server implements Runnable {
 			Record temp = new Record(currentUser.getName(),received.getNurse(),currentUser.getDivision(),received.getDate(),received.getMedicalData());
 			recordsTemp.add(temp);
 			saveDataBase();
+			date=received.getDate();
+			log.log(currentUser.getName(),"create "+name+" "+date,true);
 			
 		}else{
 		out.writeObject("Not allowed to create record!");
+		log.log(currentUser.getName(),"create "+name+" "+date,false);
 	}
 	}
 
