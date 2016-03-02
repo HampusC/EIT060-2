@@ -63,7 +63,7 @@ public class Server implements Runnable {
 				System.out.println("Logged in as Doctor");
 			}
 			if (currentUser instanceof Nurse) {
-				System.out.println("Logged in as Government");
+				System.out.println("Logged in as Nurse");
 			}
 			ObjectOutputStream out = null;
 			ObjectInputStream in = null;
@@ -84,6 +84,7 @@ public class Server implements Runnable {
 			// }
 		} catch (IOException | ClassNotFoundException e) {
 			System.out.println("Client died: " + e.getMessage());
+			numConnectedClients--;
 			e.printStackTrace();
 			return;
 		}
